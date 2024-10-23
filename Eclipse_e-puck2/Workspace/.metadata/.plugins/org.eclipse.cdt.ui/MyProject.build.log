@@ -1,0 +1,6 @@
+11:41:30 **** Build of configuration Default for project MyProject ****
+make all 
+make: Nothing to be done for 'all'.
+
+11:41:31 Build Finished. 0 errors, 0 warnings. (took 644ms)
+

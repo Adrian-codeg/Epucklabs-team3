@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#include "ch.h"
+#include "hal.h"
+#include "memory_protection.h"
+#include <main.h>
+
+//led library
+#include "leds.h"
+#include "spi_comm.h"
+
+//motor library
+#include "motors.h"
+
+//mode library
+#include "selector.h"
+
+//proximity sensor
+#include "sensors/proximity.h"
+
+//bluetooth library
+#include "epuck1x/uart/e_uart_char.h"
+#include "stdio.h"
+#include "serial_comm.h"
+
+#define time_step 64
+
+// process comunication bus for proximity sensor
+messagebus_t bus;
+MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
+
+int main(void) {
+
+	halInit();
+	chSysInit();
+	mpu_init();
+
+	//initiate the inter process communication bus
+	messagebus_init(&bus, &bus_lock, &bus_condvar);
+	proximity_start(0);
+
+	//initiate and turn off 8 led light
+	clear_leds();
+	spi_comm_start();
+
+	//initiate the motors
+	motors_init();
+
+	serial_start();
+
+	/* Infinite loop. */
+	while (1) {
+//        for(int i=0;i<8;i++)
+//        {
+//
+////        	char str[100];
+////			int str_length;
+////			str_length = sprintf(str, "Sensor %d: %d\n", i, get_calibrated_prox(i));
+////			e_send_uart1_char(str, str_length);
+//        }
+
+		if (get_calibrated_prox(1) > 500) {
+
+		}
+
+		go_straight();
+
+		for (int i = 0; i < 8; i++) {
+			get_calibrated_prox(i);
+			chThdSleepMilliseconds(100);
+		}
+	}
+
+	chThdSleepMilliseconds(100);
+}
+}
+
+void go_straight(float speed) {
+left_motor_set_speed(500);
+right_motor_set_speed(500);
+}
+
+void turn_randomly(int x) {
+turn_right();
+chThdSleepMilliseconds(100);
+}
+
+void turn_right() {
+left_motor_set_speed(500);
+right_motor_set_speed(-500);
+}
+
+void turn_left() {
+left_motor_set_speed(-500);
+right_motor_set_speed(500);
+}
+
+#define STACK_CHK_GUARD 0xe2dee396
+uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
+
+void __stack_chk_fail(void) {
+chSysHalt("Stack smashing detected");
+}
